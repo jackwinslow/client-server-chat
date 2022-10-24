@@ -6,9 +6,10 @@ import (
 	"net"
 	"os"
 	"strings"
+	"sync"
 )
 
-func handle_connections(source net.Listener, clients map[string]*gob.Encoder) {
+func handle_connections(source net.Listener, clients sync.Map) {
 	for {
 		c, err := source.Accept()
 		if err != nil {
@@ -30,7 +31,7 @@ func handle_connections(source net.Listener, clients map[string]*gob.Encoder) {
 
 				// Add client encoder to clients map on receiving first message, assuming it is the username from client
 				if needUsername {
-					clients[message] = gob.NewEncoder(c)
+					clients.Store(message, gob.NewEncoder(c))
 					needUsername = false
 					continue
 				}
@@ -51,9 +52,11 @@ func handle_connections(source net.Listener, clients map[string]*gob.Encoder) {
 					outgoingMessage = strings.TrimSpace(outgoingMessage)
 
 					// Gets outgoing encoder to send outgoing message to based on username
-					outgoingEnc := clients[toClient]
-					outgoingEnc.Encode(outgoingMessage)
-
+					v, ok := clients.Load(toClient)
+					if (ok) {
+						outgoingEnc := v.(*gob.Encoder)
+						outgoingEnc.Encode(outgoingMessage)
+					}
 				}()
 			}
 		}()
@@ -75,7 +78,8 @@ func main() {
 
 	defer l.Close()
 
-	clients := make(map[string]*gob.Encoder)
+	//clients := make(map[string]*gob.Encoder)
+	var clients sync.Map
 
 	handle_connections(l, clients)
 }
