@@ -78,7 +78,6 @@ func main() {
 
 	defer l.Close()
 
-	//clients := make(map[string]*gob.Encoder)
 	var clients sync.Map
 
 	handle_connections(l, clients)
