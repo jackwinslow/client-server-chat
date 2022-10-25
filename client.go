@@ -23,6 +23,8 @@ func main() {
 		return
 	}
 
+	gold_chain := make(chan int)
+
 	// Sends the server username upon connection initialization
 	enc := gob.NewEncoder(c)
 	messagemap := make(map[string]string)
@@ -36,30 +38,38 @@ func main() {
 		for {
 			decerr := dec.Decode(&message)
 			if decerr == nil {
-			fmt.Println(message["from"] + ">" + message["message"])
+				if _, ok := message["EXIT"]; ok {
+					gold_chain <- 1
+				}
+				fmt.Println(message["from"] + ">" + message["message"])
 			}
 		}
 	}()
 
 	// Handles further messages from user input
 	for {
-		reader := bufio.NewReader(os.Stdin)
-		text, _ := reader.ReadString('\n')
-		fields := strings.Fields(text)
-		messagemap := make(map[string]string)
-		messagemap["to"] = fields[0]
-		messagemap["from"] = username
-		messagemap["message"] = strings.Join(fields[1:], " ")
+		select {
+		case _ = <-gold_chain:
+			return
+		default:
+			reader := bufio.NewReader(os.Stdin)
+			text, _ := reader.ReadString('\n')
+			fields := strings.Fields(text)
+			messagemap := make(map[string]string)
+			messagemap["to"] = fields[0]
+			messagemap["from"] = username
+			messagemap["message"] = strings.Join(fields[1:], " ")
 
-		// Checks to make sure all required fields are included in user input
-		if len(fields) < 2 {
-			fmt.Println("Please send messages in <To> <Message> format")
-			continue
-		}
+			// Checks to make sure all required fields are included in user input
+			if len(fields) < 2 {
+				fmt.Println("Please send messages in <To> <Message> format")
+				continue
+			}
 
-		encerr := enc.Encode(messagemap)
-		if encerr != nil {
-			log.Fatal("server connection lost")
+			encerr := enc.Encode(messagemap)
+			if encerr != nil {
+				log.Fatal("server connection lost")
+			}
 		}
 	}
 }
