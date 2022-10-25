@@ -77,6 +77,7 @@ func main() {
 		}
 	}()
 
-	_ = <- gold_chain
-	return 
+	_ = <-gold_chain
+	fmt.Println("Server closed, disconnecting client.")
+	return
 }
