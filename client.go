@@ -47,18 +47,15 @@ func main() {
 	}()
 
 	// Handles further messages from user input
-	for {
-		select {
-		case _ = <-gold_chain:
-			return
-		default:
+	go func() {
+		for {
 			reader := bufio.NewReader(os.Stdin)
 			text, _ := reader.ReadString('\n')
 			fields := strings.Fields(text)
 
 			// Exit client (disconnection is handled by server) on EXIT command from user input
 			if strings.TrimSpace(fields[0]) == "EXIT" {
-				return
+				gold_chain <- 1
 			}
 
 			messagemap := make(map[string]string)
@@ -76,6 +73,10 @@ func main() {
 			if encerr != nil {
 				log.Fatal("server connection lost")
 			}
+
 		}
-	}
+	}()
+
+	_ = <- gold_chain
+	return 
 }
