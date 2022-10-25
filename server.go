@@ -84,6 +84,7 @@ func main() {
 
 		text = strings.TrimSpace(text)
 
+		// handle exit command
 		if text == "EXIT" {
 			clients.Range(func(key, value interface{}) bool {
 				outgoingEnc := value.(*gob.Encoder)
