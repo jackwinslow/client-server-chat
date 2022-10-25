@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/gob"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"strings"
@@ -24,16 +25,19 @@ func main() {
 
 	// Sends the server username upon connection initialization
 	enc := gob.NewEncoder(c)
-	enc.Encode(username)
+	messagemap := make(map[string]string)
+	messagemap["from"] = username
+	enc.Encode(messagemap)
 
 	// Handles message receiving
 	go func() {
 		dec := gob.NewDecoder(c)
-		var message string
-
+		var message map[string]string
 		for {
-			dec.Decode(&message)
-			fmt.Println(message)
+			decerr := dec.Decode(&message)
+			if decerr == nil {
+			fmt.Println(message["from"] + ">" + message["message"])
+			}
 		}
 	}()
 
@@ -42,13 +46,20 @@ func main() {
 		reader := bufio.NewReader(os.Stdin)
 		text, _ := reader.ReadString('\n')
 		fields := strings.Fields(text)
+		messagemap := make(map[string]string)
+		messagemap["to"] = fields[0]
+		messagemap["from"] = username
+		messagemap["message"] = strings.Join(fields[1:], " ")
 
 		// Checks to make sure all required fields are included in user input
-		if len(fields) < 3 {
-			fmt.Println("Please send messages in <To> <From> <Message> format")
+		if len(fields) < 2 {
+			fmt.Println("Please send messages in <To> <Message> format")
 			continue
 		}
 
-		enc.Encode(text)
+		encerr := enc.Encode(messagemap)
+		if encerr != nil {
+			log.Fatal("server connection lost")
+		}
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strings"
 	"sync"
 )
 
@@ -19,43 +18,36 @@ func handle_connections(source net.Listener, clients sync.Map) {
 
 		// Handle incoming messages from client
 		go func() {
-			needUsername := true
 			dec := gob.NewDecoder(c)
-			var message string
+			var message map[string]string
+			uname := ""
 			for {
 				err = dec.Decode(&message)
 				if err != nil {
+
 					fmt.Println(err)
 					return
 				}
 
 				// Add client encoder to clients map on receiving first message, assuming it is the username from client
-				if needUsername {
-					clients.Store(message, gob.NewEncoder(c))
-					needUsername = false
+				if uname == "" {
+					clients.Store(message["from"], gob.NewEncoder(c))
+					uname = message["from"]
 					continue
 				}
 
 				// Pass message to correct client
 				go func() {
 
-					// Breaks down incoming message
-					fields := strings.Fields(message)
-					toClient := fields[0]
-					fromClient := fields[1]
-
-					// Constructs outgoing message
-					outgoingMessage := fromClient + "> "
-					for i := 2; i < len(fields); i++ {
-						outgoingMessage = outgoingMessage + fields[i] + " "
-					}
-					outgoingMessage = strings.TrimSpace(outgoingMessage)
-
 					// Gets outgoing encoder to send outgoing message to based on username
-					v, ok := clients.Load(toClient)
+					v, ok := clients.Load(message["to"])
 					if (ok) {
 						outgoingEnc := v.(*gob.Encoder)
-						outgoingEnc.Encode(outgoingMessage)
+						outgoingEnc.Encode(message)
+					} else {
+						v, _ := clients.Load(message["from"])
+						outgoingEnc := v.(*gob.Encoder)
+						outgoingEnc.Encode("User '"+ message["to"] + "' not found!")
 					}
 				}()
 			}
