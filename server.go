@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/gob"
 	"fmt"
 	"net"
@@ -72,6 +73,24 @@ func main() {
 	defer l.Close()
 
 	var clients sync.Map
+
+	// Awaits user input of EXIT and sends outgoing message to all clients signaling server closed
+	go func() {
+		for {
+			reader := bufio.NewReader(os.Stdin)
+			text, _ := reader.ReadString('\n')
+
+			if text == "EXIT" {
+				clients.Range(func(key, value interface{}) bool {
+					outgoingEnc := value.(*gob.Encoder)
+					messagemap := make(map[string]string)
+					messagemap["EXIT"] = "TRUE"
+					outgoingEnc.Encode(messagemap)
+					return true
+				})
+			}
+		}
+	}()
 
 	handle_connections(l, clients)
 }
