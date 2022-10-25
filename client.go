@@ -55,6 +55,12 @@ func main() {
 			reader := bufio.NewReader(os.Stdin)
 			text, _ := reader.ReadString('\n')
 			fields := strings.Fields(text)
+
+			// Exit client (disconnection is handled by server) on EXIT command from user input
+			if strings.TrimSpace(fields[0]) == "EXIT" {
+				return
+			}
+
 			messagemap := make(map[string]string)
 			messagemap["to"] = fields[0]
 			messagemap["from"] = username
