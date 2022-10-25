@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-func handle_connections(source net.Listener, clients sync.Map) {
+func handle_connections(source net.Listener, clients *sync.Map) {
 	for {
 		c, err := source.Accept()
 		if err != nil {
@@ -26,13 +26,13 @@ func handle_connections(source net.Listener, clients sync.Map) {
 			for {
 				err = dec.Decode(&message)
 				if err != nil {
-					clients.Delete(uname)
+					(*clients).Delete(uname)
 					return
 				}
 
 				// Add client encoder to clients map on receiving first message, assuming it is the username from client
 				if uname == "" {
-					clients.Store(message["from"], gob.NewEncoder(c))
+					(*clients).Store(message["from"], gob.NewEncoder(c))
 					uname = message["from"]
 					continue
 				}
@@ -41,12 +41,12 @@ func handle_connections(source net.Listener, clients sync.Map) {
 				go func() {
 
 					// Gets outgoing encoder to send outgoing message to based on username
-					v, ok := clients.Load(message["to"])
+					v, ok := (*clients).Load(message["to"])
 					if ok {
 						outgoingEnc := v.(*gob.Encoder)
 						outgoingEnc.Encode(message)
 					} else {
-						v, _ := clients.Load(message["from"])
+						v, _ := (*clients).Load(message["from"])
 						outgoingEnc := v.(*gob.Encoder)
 						message["message"] = "User '" + message["to"] + "' not found!"
 						message["from"] = message["SERVER"]
@@ -75,7 +75,7 @@ func main() {
 
 	var clients sync.Map
 
-	go handle_connections(l, clients)
+	go handle_connections(l, &clients)
 
 	// Awaits user input of EXIT and sends outgoing message to all clients signaling server closed
 	for {
