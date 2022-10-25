@@ -24,8 +24,7 @@ func handle_connections(source net.Listener, clients sync.Map) {
 			for {
 				err = dec.Decode(&message)
 				if err != nil {
-
-					fmt.Println(err)
+					clients.Delete(uname)
 					return
 				}
 
@@ -47,7 +46,9 @@ func handle_connections(source net.Listener, clients sync.Map) {
 					} else {
 						v, _ := clients.Load(message["from"])
 						outgoingEnc := v.(*gob.Encoder)
-						outgoingEnc.Encode("User '"+ message["to"] + "' not found!")
+						message["message"] = "User '"+ message["to"] + "' not found!"
+						message["from"] = message["SERVER"]
+						outgoingEnc.Encode(message)
 					}
 				}()
 			}
