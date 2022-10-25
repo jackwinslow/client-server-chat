@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -74,23 +75,24 @@ func main() {
 
 	var clients sync.Map
 
+	go handle_connections(l, clients)
+
 	// Awaits user input of EXIT and sends outgoing message to all clients signaling server closed
-	go func() {
-		for {
-			reader := bufio.NewReader(os.Stdin)
-			text, _ := reader.ReadString('\n')
+	for {
+		reader := bufio.NewReader(os.Stdin)
+		text, _ := reader.ReadString('\n')
 
-			if text == "EXIT" {
-				clients.Range(func(key, value interface{}) bool {
-					outgoingEnc := value.(*gob.Encoder)
-					messagemap := make(map[string]string)
-					messagemap["EXIT"] = "TRUE"
-					outgoingEnc.Encode(messagemap)
-					return true
-				})
-			}
+		text = strings.TrimSpace(text)
+
+		if text == "EXIT" {
+			clients.Range(func(key, value interface{}) bool {
+				outgoingEnc := value.(*gob.Encoder)
+				messagemap := make(map[string]string)
+				messagemap["EXIT"] = "TRUE"
+				outgoingEnc.Encode(messagemap)
+				return true
+			})
+			return
 		}
-	}()
-
-	handle_connections(l, clients)
+	}
 }

@@ -41,7 +41,7 @@ func main() {
 				if _, ok := message["EXIT"]; ok {
 					gold_chain <- 1
 				}
-				fmt.Println(message["from"] + ">" + message["message"])
+				fmt.Println(message["from"] + "> " + message["message"])
 			}
 		}
 	}()
