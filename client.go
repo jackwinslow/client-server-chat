@@ -79,6 +79,6 @@ func main() {
 
 	// wait for kill channel to recieve signal
 	_ = <-gold_chain
-	fmt.Println("Server closed, disconnecting client.")
+	fmt.Println("Client has been disconnected")
 	return
 }
