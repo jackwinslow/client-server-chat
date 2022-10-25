@@ -36,7 +36,7 @@ func main() {
 		for {
 			decerr := dec.Decode(&message)
 			if decerr == nil {
-			fmt.Println(message["from"] + ">" + message["message"])
+				fmt.Println(message["from"] + "> " + message["message"])
 			}
 		}
 	}()

@@ -41,13 +41,13 @@ func handle_connections(source net.Listener, clients sync.Map) {
 
 					// Gets outgoing encoder to send outgoing message to based on username
 					v, ok := clients.Load(message["to"])
-					if (ok) {
+					if ok {
 						outgoingEnc := v.(*gob.Encoder)
 						outgoingEnc.Encode(message)
 					} else {
 						v, _ := clients.Load(message["from"])
 						outgoingEnc := v.(*gob.Encoder)
-						outgoingEnc.Encode("User '"+ message["to"] + "' not found!")
+						outgoingEnc.Encode("User '" + message["to"] + "' not found!")
 					}
 				}()
 			}
